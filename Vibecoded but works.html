@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link rel="icon" type="image/png" href="https://www.google.com/s2/favicons?domain=privatepharma.com&sz=64">
+  
+  <title>Private Pharma Order Calculator</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/mauve.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/mauve-dark.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/violet.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/violet-dark.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/red.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/red-dark.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/green.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/green-dark.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/amber.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/amber-dark.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/teal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@latest/teal-dark.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border:     'var(--mauve-6)',
+            input:      'var(--mauve-6)',
+            ring:       'var(--violet-8)',
+            background: 'var(--mauve-1)',
+            foreground: 'var(--mauve-12)',
+            primary: {
+              DEFAULT:    'var(--violet-9)',
+              foreground: 'var(--mauve-1)',
+            },
+            secondary: {
+              DEFAULT:    'var(--mauve-3)',
+              foreground: 'var(--mauve-11)',
+            },
+            destructive: {
+              DEFAULT:    'var(--red-9)',
+              foreground: 'var(--mauve-1)',
+            },
+            muted: {
+              DEFAULT:    'var(--mauve-3)',
+              foreground: 'var(--mauve-10)',
+            },
+            accent: {
+              DEFAULT:    'var(--mauve-4)',
+              foreground: 'var(--mauve-12)',
+            },
+            card: {
+              DEFAULT:    'var(--mauve-2)',
+              foreground: 'var(--mauve-12)',
+            },
+          },
+          borderRadius: {
+            lg: '0.5rem',
+            md: '0.375rem',
+            sm: '0.25rem',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--mauve-1);
+      color: var(--mauve-12);
+    }
+    /* Custom scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--mauve-6); border-radius: 3px; }
+    /* Remove spinners */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    /* In-cart row — teal, distinct from grey header */
+    .in-cart-row { background-color: color-mix(in srgb, var(--teal-9) 8%, transparent) !important; }
+    .in-cart-row:hover { background-color: color-mix(in srgb, var(--teal-9) 13%, transparent) !important; }
+    .flash-add { background-color: color-mix(in srgb, var(--teal-9) 25%, transparent) !important; }
+  </style>
+</head>
+<body class="bg-background text-foreground min-h-full antialiased transition-colors duration-200">
+
+<div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 border-b pb-6 border-border">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Private Pharma Order Calculator</h1>
+      <p class="text-sm text-muted-foreground mt-1">Search, filter, dynamic VAT toggles, and instant order tracking.</p>
+    </div>
+    <div class="flex items-center gap-3 self-start sm:self-center">
+      <button onclick="triggerNewOrder()" id="top-new-order-btn" style="display: none;" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-destructive hover:text-white hover:border-destructive h-9 px-4 shadow-sm" title="Clear current order data, selections and resets filters">
+        ✨ New Order
+      </button>
+      
+      <button onclick="toggleDarkMode()" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle Dark/Light Mode">
+        <svg id="theme-toggle-dark-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+        <svg id="theme-toggle-light-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 112 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="saved-banner" style="display:none" class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 text-sm">
+    <div class="flex items-center gap-3 text-blue-800 dark:text-blue-300">
+      <span class="text-lg">📄</span>
+      <span>Last loaded: <strong id="saved-filename" class="font-medium">products.csv</strong> — <span id="saved-count"></span></span>
+    </div>
+    <div class="flex gap-2 self-end sm:self-center">
+      <button onclick="useSavedCSV()" class="inline-flex items-center justify-center rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 h-8 px-3 transition-colors">Continue with this</button>
+      <button onclick="clearSavedAndUpload()" class="inline-flex items-center justify-center rounded-md text-xs font-medium border border-blue-200 dark:border-blue-900 bg-transparent text-blue-800 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 h-8 px-3 transition-colors">Load new CSV</button>
+    </div>
+  </div>
+
+  <div id="upload-section" style="display:none" class="rounded-xl border border-border bg-card text-card-foreground shadow-sm mb-6">
+    <div class="p-6">
+      <h3 class="text-xs font-semibold tracking-wider uppercase text-muted-foreground mb-4">Load products</h3>
+      
+      <div id="drop-zone" onclick="document.getElementById('csv-file').click()" class="border border-dashed border-input hover:border-ring rounded-lg p-10 text-center cursor-pointer bg-muted/30 transition-colors duration-150">
+        <div class="text-3xl mb-2">📤</div>
+        <p class="text-sm font-medium text-foreground">Click to upload your CSV file, or drag and drop it here</p>
+        <p class="text-xs text-muted-foreground mt-2 max-w-md mx-auto">First row can be headers. Columns 2 & 3 must be cost (ex. VAT) and cost (inc. VAT). Extra columns turn into dynamic dropdown filters.</p>
+      </div>
+      <input type="file" id="csv-file" accept=".csv" class="hidden">
+      
+      <div class="relative my-6 text-center text-xs uppercase text-muted-foreground">
+        <span class="absolute inset-x-0 top-1/2 -translate-y-1/2 border-b border-border"></span>
+        <span class="relative bg-card px-2">or paste CSV data below</span>
+      </div>
+      
+      <textarea id="csv-paste" rows="4" placeholder="Category,Product Name,10.00,12.00&#10;Filler,Widget A,10.00,12.00&#10;Tool,Wrench B,25.50,30.60" class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y"></textarea>
+      <button onclick="loadFromPaste()" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 w-full mt-4 transition-colors shadow-sm">Load products</button>
+    </div>
+  </div>
+
+  <div id="main-section" style="display:none" class="space-y-8">
+
+    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-border bg-muted/20 flex flex-col gap-4">
+        
+        <div class="relative w-full">
+          <input type="text" id="search" placeholder="Search product name or custom tags…" oninput="handleSearchInput()" autocomplete="off" class="flex h-10 w-full rounded-md border border-input bg-background pl-3 pr-10 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <button id="clear-search-btn" onclick="clearSearchField()" style="display: none;" class="absolute right-2.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground text-lg transition-colors" title="Clear search">
+            &times;
+          </button>
+        </div>
+        
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pt-2 border-t border-border/40">
+          <div id="filter-row" class="flex flex-wrap items-end gap-3 flex-1"></div>
+          
+          <div class="flex flex-wrap items-center gap-3 self-start md:self-end shrink-0">
+            <div class="flex items-center gap-2 bg-background border border-input p-1 rounded-lg shrink-0">
+              <span class="text-xs font-semibold text-muted-foreground px-1.5 whitespace-nowrap">Default View:</span>
+              <div class="inline-flex rounded-md bg-muted/50 p-0.5" id="global-vat-toggle">
+                <button onclick="setGlobalVatMode('ex')" id="gbtn-ex" data-active="true" class="rounded-md px-2.5 py-1 text-xs font-semibold bg-secondary text-foreground shadow-sm transition-all">Ex. VAT</button>
+                <button onclick="setGlobalVatMode('inc')" id="gbtn-inc" class="rounded-md px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground bg-transparent transition-all">Inc. VAT</button>
+              </div>
+              <button id="reset-overrides-btn" onclick="clearRowOverrides()" style="display:none;" class="rounded-md px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40 dark:border-amber-900 transition-colors">
+                Reset Row Overrides
+              </button>
+            </div>
+
+            <button onclick="promptNewCSV()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 transition-colors shrink-0">
+              <span class="mr-1.5 text-xs">↺</span> New CSV
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="result-meta" style="display:none" class="text-xs font-medium text-muted-foreground bg-secondary px-6 py-2 border-b border-border"></div>
+
+      <div class="product-scroll max-h-[440px] overflow-y-auto custom-scrollbar">
+        <table id="product-table" class="w-full text-sm">
+          <thead id="product-thead" class="sticky top-0 bg-secondary text-secondary-foreground font-medium text-left text-xs uppercase tracking-wider z-10 border-b border-border"></thead>
+          <tbody id="results-body" class="divide-y divide-border">
+            <tr><td class="p-8 text-center text-muted-foreground">No products loaded</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-xs font-semibold tracking-wider uppercase text-muted-foreground mb-3">Your Order Cart</h3>
+      <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-sm">
+            <thead class="bg-muted/40 text-muted-foreground font-medium text-xs uppercase tracking-wider border-b border-border">
+              <tr>
+                <th class="p-4 text-left">Product</th>
+                <th class="p-4 text-center w-[120px]">Quantity</th>
+                <th class="p-4 text-right w-[140px]">Unit Price</th>
+                <th class="p-4 text-right w-[140px]">Line Total</th>
+                <th class="p-4 text-center w-[60px]"></th>
+              </tr>
+            </thead>
+            <tbody id="cart-body" class="divide-y divide-border">
+              <tr><td colspan="5" class="p-8 text-center text-muted-foreground">No items added yet. Search and add products from the system catalog above.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="totals-area" style="display:none" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Subtotal (Ex. VAT)</p>
+          <p class="text-3xl font-semibold tracking-tight mt-1 text-muted-foreground" id="total-ex">£0.00</p>
+        </div>
+        <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Subtotal (Inc. VAT)</p>
+          <p class="text-3xl font-semibold tracking-tight mt-1 text-muted-foreground" id="total-inc">£0.00</p>
+        </div>
+        <div class="rounded-xl border border-border bg-secondary p-6 shadow-sm ring-1 ring-border">
+          <p class="text-xs font-semibold uppercase tracking-wider text-secondary-foreground/70">Grand Total</p>
+          <p class="text-3xl font-bold tracking-tight mt-1 text-secondary-foreground" id="grand-total">£0.00</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center justify-between gap-4 pt-2">
+        <span id="item-count" class="text-sm text-muted-foreground font-medium"></span>
+        <button onclick="clearCart()" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-destructive text-destructive hover:bg-destructive hover:text-white h-9 px-4">
+          Clear entire order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let products = [];      
+let extraCols = [];     
+let activeFilters = {}; 
+let cart = [];
+let globalVatMode = 'ex'; 
+let productOverrides = {}; 
+
+// ─── Dark Mode Handler ────────────────────────────────────────────────────────
+if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.documentElement.classList.add('dark');
+  document.getElementById('theme-toggle-light-icon').classList.remove('hidden');
+} else {
+  document.documentElement.classList.remove('dark');
+  document.getElementById('theme-toggle-dark-icon').classList.remove('hidden');
+}
+
+function toggleDarkMode() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('color-theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-toggle-dark-icon').classList.toggle('hidden', isDark);
+  document.getElementById('theme-toggle-light-icon').classList.toggle('hidden', !isDark);
+}
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'orderCalc_csv';
+const FILENAME_KEY = 'orderCalc_filename';
+
+function saveCSV(text, filename) {
+  try {
+    localStorage.setItem(STORAGE_KEY, text);
+    localStorage.setItem(FILENAME_KEY, filename || 'products.csv');
+  } catch(e) {}
+}
+
+function loadSavedCSV() {
+  try {
+    const text = localStorage.getItem(STORAGE_KEY);
+    const filename = localStorage.getItem(FILENAME_KEY) || 'products.csv';
+    return text ? { text, filename } : null;
+  } catch(e) { return null; }
+}
+
+function clearSavedCSV() {
+  try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(FILENAME_KEY); } catch(e) {}
+}
+
+// ─── CSV Parsing ──────────────────────────────────────────────────────────────
+function parseCSVLine(line) {
+  const cols = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+    cur += ch;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+// ─── Bidirectional Helpers ────────────────────────────────────────────────────
+function getCartQtyForProduct(idx) {
+  return cart.filter(c => c.idx === idx).reduce((sum, c) => sum + c.qty, 0);
+}
+
+function syncProductRowQtyInput(idx) {
+  const el = document.getElementById('qi-' + idx);
+  if (el) {
+    const currentInCart = getCartQtyForProduct(idx);
+    el.value = currentInCart > 0 ? currentInCart : 1;
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return null;
+
+  let headerRow = null;
+  let dataStart = 0;
+
+  const firstCols = parseCSVLine(lines[0]);
+  const col1IsNum = !isNaN(parseFloat(firstCols[1]));
+  const col2IsNum = !isNaN(parseFloat(firstCols[2]));
+  if (!col1IsNum || !col2IsNum) {
+    headerRow = firstCols;
+    dataStart = 1;
+  }
+
+  let extras = [];
+  if (headerRow && headerRow.length > 3) {
+    extras = headerRow.slice(3).map(h => h || `Column ${extras.length + 4}`);
+  } else if (!headerRow && lines.length > 0) {
+    const sample = parseCSVLine(lines[0]);
+    for (let i = 3; i < sample.length; i++) extras.push(`Column ${i + 1}`);
+  }
+
+  const parsed = [];
+  for (let li = dataStart; li < lines.length; li++) {
+    const cols = parseCSVLine(lines[li]);
+    if (cols.length < 3) continue;
+    const name = cols[0];
+    const cost = parseFloat(cols[1]);
+    const vat = parseFloat(cols[2]);
+    if (!name || isNaN(cost) || isNaN(vat)) continue;
+    const extraVals = {};
+    extras.forEach((col, i) => { extraVals[col] = cols[3 + i] || ''; });
+    parsed.push({ name, cost, vat, extras: extraVals });
+  }
+
+  return parsed.length ? { products: parsed, extraCols: extras } : null;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = loadSavedCSV();
+  if (saved) {
+    const parsed = parseCSV(saved.text);
+    if (parsed) {
+      const banner = document.getElementById('saved-banner');
+      document.getElementById('saved-filename').textContent = saved.filename;
+      document.getElementById('saved-count').textContent = `${parsed.products.length} product${parsed.products.length !== 1 ? 's' : ''}`;
+      banner.style.display = 'flex';
+    } else {
+      clearSavedCSV();
+      showUpload();
+    }
+  } else {
+    showUpload();
+  }
+});
+
+function useSavedCSV() {
+  const saved = loadSavedCSV();
+  if (!saved) { showUpload(); return; }
+  const parsed = parseCSV(saved.text);
+  if (!parsed) { clearSavedCSV(); showUpload(); return; }
+  document.getElementById('saved-banner').style.display = 'none';
+  initProducts(parsed);
+}
+
+function clearSavedAndUpload() {
+  clearSavedCSV();
+  document.getElementById('saved-banner').style.display = 'none';
+  showUpload();
+}
+
+function promptNewCSV() {
+  if (cart.length && !confirm('Loading a new CSV will keep your current order. Continue?')) return;
+  clearSavedCSV();
+  document.getElementById('main-section').style.display = 'none';
+  document.getElementById('top-new-order-btn').style.display = 'none';
+  showUpload();
+}
+
+function showUpload() {
+  document.getElementById('upload-section').style.display = 'block';
+}
+
+// ─── Global New Order Hard Reset Logic ────────────────────────────────────────
+function triggerNewOrder() {
+  if (cart.length && !confirm('Are you sure you want to start a new order? This will wipe your current item quantities and custom adjustments.')) {
+    return;
+  }
+  
+  // Wipe arrays/objects
+  cart = [];
+  productOverrides = {};
+  activeFilters = {};
+  
+  // Clean inputs & toggles
+  const searchEl = document.getElementById('search');
+  if (searchEl) searchEl.value = '';
+  
+  const clearSearchBtn = document.getElementById('clear-search-btn');
+  if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+  
+  // Reset view to default Ex. VAT
+  setGlobalVatMode('ex');
+  
+  // Clear select dropdown filters
+  extraCols.forEach(col => {
+    const el = document.getElementById('filter-' + col);
+    if (el) el.value = '';
+  });
+  
+  const clearFiltersBtn = document.getElementById('clear-filters-btn');
+  if (clearFiltersBtn) clearFiltersBtn.style.display = 'none';
+  
+  // Refresh layout nodes
+  updateResetOverridesButtonVisibility();
+  applyFilters();
+  renderCart();
+}
+
+// ─── Load ─────────────────────────────────────────────────────────────────────
+function loadFromText(text, filename) {
+  const parsed = parseCSV(text);
+  if (!parsed) {
+    alert('Could not parse any products.\n\nExpected columns: Name, Cost (Ex. VAT), Cost (Inc. VAT) inside the first three rows.');
+    return;
+  }
+  saveCSV(text, filename);
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('saved-banner').style.display = 'none';
+  initProducts(parsed);
+}
+
+function loadFromPaste() {
+  const text = document.getElementById('csv-paste').value;
+  if (!text.trim()) { alert('Please paste some CSV data first.'); return; }
+  loadFromText(text, 'pasted data');
+}
+
+document.getElementById('csv-file').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => loadFromText(ev.target.result, file.name);
+  reader.readAsText(file);
+  this.value = '';
+});
+
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('bg-muted'); });
+dz.addEventListener('dragleave', () => { dz.classList.remove('bg-muted'); });
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('bg-muted');
+  const file = e.dataTransfer.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => loadFromText(ev.target.result, file.name);
+  reader.readAsText(file);
+});
+
+// ─── Init products ────────────────────────────────────────────────────────────
+function initProducts(parsed) {
+  products = parsed.products;
+  extraCols = parsed.extraCols;
+  activeFilters = {};
+  productOverrides = {}; 
+  
+  clearSearchField();
+  document.getElementById('main-section').style.display = 'block';
+  document.getElementById('top-new-order-btn').style.display = 'inline-flex';
+  buildTableHeader();
+  buildFilterRow();
+  updateResetOverridesButtonVisibility();
+  applyFilters();
+}
+
+// ─── Table header ─────────────────────────────────────────────────────────────
+function buildTableHeader() {
+  const thead = document.getElementById('product-thead');
+  const extraHeaders = extraCols.map(c => `<th class="p-4 font-medium text-muted-foreground">${esc(c)}</th>`).join('');
+  thead.innerHTML = `<tr>
+    <th class="p-4 font-medium text-muted-foreground">Product</th>
+    <th class="p-4 text-right font-medium text-muted-foreground w-[100px]">Ex. VAT</th>
+    <th class="p-4 text-right font-medium text-muted-foreground w-[100px]">Inc. VAT</th>
+    ${extraHeaders}
+    <th class="py-4 px-3 text-right font-medium text-muted-foreground w-[400px] whitespace-nowrap">Qty &amp; VAT type</th>
+  </tr>`;
+}
+
+// ─── Filter row ───────────────────────────────────────────────────────────────
+function buildFilterRow() {
+  const row = document.getElementById('filter-row');
+  if (!extraCols.length) { row.innerHTML = ''; return; }
+
+  row.innerHTML = extraCols.map(col => {
+    const values = [...new Set(products.map(p => p.extras[col]).filter(v => v))].sort();
+    const options = values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    return `<div class="flex flex-col gap-1.5 min-w-[140px]">
+      <label class="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/80">${esc(col)}</label>
+      <select id="filter-${esc(col)}" onchange="setFilter('${esc(col)}', this.value)" class="h-8 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+        <option value="">All items</option>
+        ${options}
+      </select>
+    </div>`;
+  }).join('') + `<button class="inline-flex items-center justify-center rounded-md text-xs font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 transition-colors self-end" onclick="clearFilters()" id="clear-filters-btn" style="display:none">Clear filters</button>`;
+}
+
+function setFilter(col, val) {
+  if (val) activeFilters[col] = val;
+  else delete activeFilters[col];
+  const hasFilters = Object.keys(activeFilters).length > 0;
+  const clearBtn = document.getElementById('clear-filters-btn');
+  if (clearBtn) clearBtn.style.display = hasFilters ? 'inline-flex' : 'none';
+  applyFilters();
+}
+
+function clearFilters() {
+  activeFilters = {};
+  extraCols.forEach(col => {
+    const el = document.getElementById('filter-' + col);
+    if (el) el.value = '';
+  });
+  const clearBtn = document.getElementById('clear-filters-btn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  applyFilters();
+}
+
+// ─── Search input handling ─────────────────────────────────────────────────────
+function handleSearchInput() {
+  const q = document.getElementById('search').value;
+  const clearBtn = document.getElementById('clear-search-btn');
+  if (clearBtn) {
+    clearBtn.style.display = q.trim().length > 0 ? 'inline-flex' : 'none';
+  }
+  applyFilters();
+}
+
+function clearSearchField() {
+  const searchInput = document.getElementById('search');
+  if (searchInput) searchInput.value = '';
+  const clearBtn = document.getElementById('clear-search-btn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  applyFilters();
+}
+
+// ─── Global Starter VAT view toggle handler ────────────────────────────────────
+function setGlobalVatMode(mode) {
+  globalVatMode = mode;
+  const exBtn = document.getElementById('gbtn-ex');
+  const incBtn = document.getElementById('gbtn-inc');
+
+  if (!exBtn || !incBtn) return;
+
+  exBtn.removeAttribute('data-active');
+  exBtn.className = "rounded-md px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground bg-transparent transition-all";
+  incBtn.removeAttribute('data-active');
+  incBtn.className = "rounded-md px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground bg-transparent transition-all";
+
+  if (mode === 'ex') {
+    exBtn.setAttribute('data-active', 'true');
+    exBtn.className = "rounded-md px-2.5 py-1 text-xs font-semibold bg-secondary text-foreground shadow-sm transition-all";
+  } else {
+    incBtn.setAttribute('data-active', 'true');
+    incBtn.className = "rounded-md px-2.5 py-1 text-xs font-semibold bg-secondary text-foreground shadow-sm transition-all";
+  }
+
+  updateResetOverridesButtonVisibility();
+  applyFilters();
+}
+
+// ─── Reset Row Overrides Logic ────────────────────────────────────────────────
+function clearRowOverrides() {
+  productOverrides = {};
+  updateResetOverridesButtonVisibility();
+  applyFilters();
+}
+
+function updateResetOverridesButtonVisibility() {
+  const btn = document.getElementById('reset-overrides-btn');
+  if (!btn) return;
+
+  const hasOverrides = Object.keys(productOverrides).some(key => {
+    if (key.endsWith('_val')) return false; 
+    return productOverrides[key] !== globalVatMode;
+  });
+
+  btn.style.display = hasOverrides ? 'inline-block' : 'none';
+}
+
+// ─── Render product list ──────────────────────────────────────────────────────
+function applyFilters() {
+  const q = (document.getElementById('search')?.value || '').toLowerCase().trim();
+  let hits = products;
+
+  if (q) hits = hits.filter(p => p.name.toLowerCase().includes(q) ||
+    extraCols.some(c => p.extras[c] && p.extras[c].toLowerCase().includes(q)));
+
+  Object.entries(activeFilters).forEach(([col, val]) => {
+    hits = hits.filter(p => p.extras[col] === val);
+  });
+
+  const body = document.getElementById('results-body');
+  const meta = document.getElementById('result-meta');
+  const totalCols = 3 + extraCols.length + 1;
+
+  if (!hits.length) {
+    body.innerHTML = `<tr><td colspan="${totalCols}" class="p-8 text-center text-muted-foreground text-sm">No items matching criteria found.</td></tr>`;
+    meta.style.display = 'none';
+    return;
+  }
+
+  meta.style.display = 'block';
+  meta.textContent = `Displaying ${Math.min(hits.length, 150)} of ${hits.length} records matching search`;
+
+  body.innerHTML = hits.slice(0, 150).map(p => {
+    const idx = products.indexOf(p);
+    const extraCells = extraCols.map(c =>
+      `<td class="p-4 align-middle"><span class="inline-flex items-center rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors">${esc(p.extras[c] || '—')}</span></td>`
+    ).join('');
+    const inCart = cart.some(c => c.idx === idx);
+    const currentQty = getCartQtyForProduct(idx);
+    const initialInputVal = currentQty > 0 ? currentQty : 1;
+
+    const currentMode = productOverrides[idx] || globalVatMode;
+    const hasActiveOverride = productOverrides[idx] && productOverrides[idx] !== globalVatMode;
+
+    const isEx = currentMode === 'ex';
+    const isInc = currentMode === 'inc';
+    const isCustom = currentMode === 'custom';
+
+    const exClass = isEx ? "p-4 align-middle text-right tabular-nums text-foreground font-semibold" : "p-4 align-middle text-right tabular-nums text-muted-foreground text-sm";
+    const incClass = isInc ? "p-4 align-middle text-right tabular-nums text-foreground font-semibold" : "p-4 align-middle text-right tabular-nums text-muted-foreground text-sm";
+    
+    const exBtnMarkup = isEx ? `data-active="true" class="rounded-md px-2 py-1 text-xs font-medium bg-secondary text-foreground shadow-sm transition-all"` : `class="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-transparent transition-all"`;
+    const incBtnMarkup = isInc ? `data-active="true" class="rounded-md px-2 py-1 text-xs font-medium bg-secondary text-foreground shadow-sm transition-all"` : `class="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-transparent transition-all"`;
+    const customBtnMarkup = isCustom ? `data-active="true" class="rounded-md px-2 py-1 text-xs font-medium shadow-sm transition-all" style="background:var(--amber-3);color:var(--amber-11)"` : `class="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-transparent transition-all"`;
+
+    const stepperVisibilityStyle = inCart ? 'inline-flex' : 'hidden';
+    const customInputVisibility = isCustom ? '' : 'hidden';
+    const savedCustomValue = (isCustom && productOverrides[idx + '_val']) ? productOverrides[idx + '_val'] : '';
+
+    const overrideIndicatorMarkup = hasActiveOverride 
+      ? `<span class="text-amber-500 font-bold text-base mr-1 select-none leading-none animate-pulse" title="Row settings differ from default view">•</span>`
+      : '';
+
+    return `<tr id="prow-${idx}" class="hover:bg-muted/40 transition-all duration-300 ${inCart ? 'in-cart-row' : ''}">
+      <td class="p-4 align-middle font-medium text-foreground max-w-[240px]">
+        <div class="flex items-center gap-2">
+          <span id="cart-ind-${idx}" style="background:var(--teal-9)" class="shrink-0 w-1.5 h-1.5 rounded-full transition-opacity duration-200 ${inCart ? '' : 'opacity-0'}"></span>
+          <span class="truncate" title="${esc(p.name)}">${esc(p.name)}</span>
+        </div>
+      </td>
+      <td class="${exClass}" id="pex-${idx}">${fmt(p.cost)}</td>
+      <td class="${incClass}" id="pinc-${idx}">${fmt(p.vat)}</td>
+      ${extraCells}
+      <td class="py-4 px-3 align-middle">
+        <div class="flex items-center justify-end gap-1.5 flex-nowrap">
+          ${overrideIndicatorMarkup}
+          <div class="inline-flex rounded-lg border border-input bg-background p-0.5 shrink-0" id="vt-${idx}">
+            <button onclick="setVatMode(${idx},'ex')" ${exBtnMarkup}>Ex</button>
+            <button onclick="setVatMode(${idx},'inc')" ${incBtnMarkup}>Inc</button>
+            <button onclick="setVatMode(${idx},'custom')" ${customBtnMarkup}>£ Custom</button>
+          </div>
+          <input type="number" id="cp-${idx}" placeholder="0.00" min="0" step="0.01" value="${savedCustomValue}"
+            onblur="if(!this.value.trim())setVatMode(${idx},'ex')"
+            oninput="handleCustomPriceInput(${idx}, this.value)"
+            onkeydown="if(event.key==='Enter')addToCart(${idx})"
+            class="${customInputVisibility} h-8 w-20 rounded-md border border-input bg-background px-2 text-center text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-medium">
+          <div id="qwrap-${idx}" class="${stepperVisibilityStyle} items-center rounded-md border border-input bg-background shrink-0 overflow-hidden">
+            <button onclick="stepQty(${idx},-1)" class="h-8 w-7 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm leading-none select-none">−</button>
+            <input type="number" class="h-8 w-10 border-x border-input bg-background px-0 text-center text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-medium" id="qi-${idx}" value="${initialInputVal}" min="0" max="9999" oninput="handleListQtyChange(${idx}, this.value)">
+            <button onclick="stepQty(${idx},1)" class="h-8 w-7 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm leading-none select-none">+</button>
+          </div>
+          <div id="add-btn-${idx}">${renderAddBtn(idx)}</div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── VAT mode ─────────────────────────────────────────────────────────────────
+function setVatMode(idx, mode) {
+  productOverrides[idx] = mode;
+
+  const toggle = document.getElementById('vt-' + idx);
+  if (!toggle) return;
+  const [exBtn, incBtn, customBtn] = toggle.querySelectorAll('button');
+  const exCell = document.getElementById('pex-' + idx);
+  const incCell = document.getElementById('pinc-' + idx);
+  const customInput = document.getElementById('cp-' + idx);
+
+  const allBtns = [exBtn, incBtn, customBtn];
+  allBtns.forEach(btn => {
+    btn.removeAttribute('data-active');
+    btn.className = "rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-transparent transition-all";
+  });
+
+  if (mode === 'ex') {
+    exBtn.setAttribute('data-active', 'true');
+    exBtn.className = "rounded-md px-2 py-1 text-xs font-medium bg-secondary text-foreground shadow-sm transition-all";
+    if (exCell) exCell.className = "p-4 align-middle text-right tabular-nums text-foreground font-semibold";
+    if (incCell) incCell.className = "p-4 align-middle text-right tabular-nums text-muted-foreground text-sm";
+    if (customInput) customInput.classList.add('hidden');
+  } else if (mode === 'inc') {
+    incBtn.setAttribute('data-active', 'true');
+    incBtn.className = "rounded-md px-2 py-1 text-xs font-medium bg-secondary text-foreground shadow-sm transition-all";
+    if (incCell) incCell.className = "p-4 align-middle text-right tabular-nums text-foreground font-semibold";
+    if (exCell) exCell.className = "p-4 align-middle text-right tabular-nums text-muted-foreground text-sm";
+    if (customInput) customInput.classList.add('hidden');
+  } else { 
+    customBtn.setAttribute('data-active', 'true');
+    customBtn.className = "rounded-md px-2 py-1 text-xs font-medium shadow-sm transition-all";
+    customBtn.style.cssText = "background:var(--amber-3);color:var(--amber-11)";
+    if (exCell) exCell.className = "p-4 align-middle text-right tabular-nums text-muted-foreground text-sm";
+    if (incCell) incCell.className = "p-4 align-middle text-right tabular-nums text-muted-foreground text-sm";
+    if (customInput) { customInput.classList.remove('hidden'); customInput.focus(); }
+  }
+
+  if (mode !== 'custom') { customBtn.style.cssText = ''; }
+
+  syncCartItemWithToggle(idx, mode);
+  updateResetOverridesButtonVisibility();
+  applyFilters();
+}
+
+function getVatMode(idx) {
+  return productOverrides[idx] || globalVatMode;
+}
+
+function syncCartItemWithToggle(idx, mode) {
+  const cartItem = cart.find(c => c.idx === idx);
+  if (!cartItem) return;
+
+  const p = products[idx];
+  if (mode === 'custom') {
+    const cpEl = document.getElementById('cp-' + idx);
+    const customVal = parseFloat(cpEl ? cpEl.value : '');
+    cartItem.price = (!isNaN(customVal) && customVal >= 0) ? customVal : 0;
+    cartItem.isCustom = true;
+    cartItem.mode = 'custom';
+  } else {
+    cartItem.price = mode === 'inc' ? p.vat : p.cost;
+    cartItem.isCustom = false;
+    cartItem.mode = mode;
+  }
+
+  renderCart();
+}
+
+function handleCustomPriceInput(idx, value) {
+  productOverrides[idx + '_val'] = value; 
+  
+  const cartItem = cart.find(c => c.idx === idx);
+  if (!cartItem || cartItem.mode !== 'custom') return;
+
+  const customVal = parseFloat(value);
+  cartItem.price = (!isNaN(customVal) && customVal >= 0) ? customVal : 0;
+  
+  renderCart();
+}
+
+// ─── Add / Remove button rendering ────────────────────────────────────────────
+function renderAddBtn(idx) {
+  const lines = cart.filter(c => c.idx === idx);
+  if (!lines.length) {
+    return `<button onclick="addToCart(${idx})" class="inline-flex items-center justify-center rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-4 transition-colors shadow-sm whitespace-nowrap">Add to Cart</button>`;
+  }
+  if (lines.length === 1) {
+    return `<button onclick="removeAllLinesFromCart(${idx})" class="inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 transition-colors shadow-sm whitespace-nowrap" style="background:var(--red-9);color:#fff" title="Remove from cart">✕ Remove</button>`;
+  }
+  return `<div class="relative inline-flex">
+    <button onclick="toggleRemovePicker(${idx})" class="inline-flex items-center gap-1 justify-center rounded-md text-xs font-medium h-8 px-3 transition-colors shadow-sm whitespace-nowrap" style="background:var(--red-9);color:#fff" title="Remove line selections">✕ Remove <span style="opacity:.75">(${lines.length})</span></button>
+    <div id="rpicker-${idx}" class="hidden absolute right-0 top-full mt-1 z-50 min-w-[190px] rounded-lg border border-border bg-card shadow-lg p-1.5 text-xs"></div>
+  </div>`;
+}
+
+function toggleRemovePicker(idx) {
+  const picker = document.getElementById('rpicker-' + idx);
+  if (!picker) return;
+  const isOpen = !picker.classList.contains('hidden');
+  document.querySelectorAll('[id^="rpicker-"]').forEach(p => p.classList.add('hidden'));
+  if (isOpen) return;
+
+  const lines = cart.filter(c => c.idx === idx);
+  if (!lines.length) return;
+
+  let html = '';
+  lines.forEach(item => {
+    const ci = cart.indexOf(item);
+    const modeLabel = item.isCustom ? 'Custom' : item.mode === 'inc' ? 'Inc. VAT' : 'Ex. VAT';
+    html += `<div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md hover:bg-muted/60 transition-colors">
+      <span class="text-muted-foreground truncate max-w-[80px]">${modeLabel} · ${fmt(item.price)} × ${item.qty}</span>
+      <div class="flex items-center gap-1 shrink-0">
+        <button onclick="removeOneFromCart(${ci},${idx})" class="h-6 px-1.5 rounded text-[10px] font-medium border border-border hover:bg-muted transition-colors" title="Remove 1">−1</button>
+        <button onclick="removeAllLineFromCart(${ci},${idx})" class="h-6 px-1.5 rounded text-[10px] font-medium transition-colors" style="background:var(--red-3);color:var(--red-11);border:1px solid var(--red-6)" title="Remove all">All</button>
+      </div>
+    </div>`;
+  });
+  if (lines.length > 1) {
+    html += `<div class="mt-1 pt-1 border-t border-border">
+      <button onclick="removeAllLinesFromCart(${idx})" class="w-full text-center h-6 rounded text-[10px] font-medium transition-colors" style="background:var(--red-3);color:var(--red-11);border:1px solid var(--red-6)">Remove all lines</button>
+    </div>`;
+  }
+  picker.innerHTML = html;
+  picker.classList.remove('hidden');
+
+  setTimeout(() => {
+    const close = (e) => {
+      if (!picker.contains(e.target)) {
+        picker.classList.add('hidden');
+        document.removeEventListener('click', close);
+      }
+    };
+    document.addEventListener('click', close);
+  }, 0);
+}
+
+function removeOneFromCart(cartIdx, productIdx) {
+  document.getElementById('rpicker-' + productIdx)?.classList.add('hidden');
+  if (cart[cartIdx].qty > 1) {
+    cart[cartIdx].qty -= 1;
+    renderCart();
+    updateRowAddBtn(productIdx);
+    updateRowCartIndicator(productIdx);
+    syncProductRowQtyInput(productIdx);
+  } else {
+    removeAllLineFromCart(cartIdx, productIdx);
+  }
+}
+
+// ─── List mutation handlers ───────────────────────────────────────────────────
+function removeAllLineFromCart(cartIdx, productIdx) {
+  document.getElementById('rpicker-' + productIdx)?.classList.add('hidden');
+  cart.splice(cartIdx, 1);
+  renderCart();
+  updateRowAddBtn(productIdx);
+  updateRowCartIndicator(productIdx);
+  syncProductRowQtyInput(productIdx);
+  if (!cart.some(c => c.idx === productIdx)) {
+    toggleListStepperVisibility(productIdx, false);
+  }
+}
+
+function removeAllLinesFromCart(productIdx) {
+  document.getElementById('rpicker-' + productIdx)?.classList.add('hidden');
+  for (let i = cart.length - 1; i >= 0; i--) {
+    if (cart[i].idx === productIdx) cart.splice(i, 1);
+  }
+  renderCart();
+  updateRowAddBtn(productIdx);
+  updateRowCartIndicator(productIdx);
+  syncProductRowQtyInput(productIdx);
+  toggleListStepperVisibility(productIdx, false);
+}
+
+function updateRowAddBtn(idx) {
+  const wrapper = document.getElementById('add-btn-' + idx);
+  if (wrapper) wrapper.innerHTML = renderAddBtn(idx);
+}
+
+function toggleListStepperVisibility(idx, makeVisible) {
+  const wrap = document.getElementById('qwrap-' + idx);
+  if (!wrap) return;
+  if (makeVisible) {
+    wrap.classList.remove('hidden');
+    wrap.classList.add('inline-flex');
+  } else {
+    wrap.classList.remove('inline-flex');
+    wrap.classList.add('hidden');
+  }
+}
+
+function highlightRow(idx) {
+  const row = document.getElementById('prow-' + idx);
+  if (!row) return;
+  row.classList.add('flash-add');
+  setTimeout(() => row.classList.remove('flash-add'), 500);
+  row.classList.add('in-cart-row');
+  updateRowCartIndicator(idx);
+}
+
+function updateRowCartIndicator(idx) {
+  const indicator = document.getElementById('cart-ind-' + idx);
+  const inCart = cart.some(c => c.idx === idx);
+  if (!indicator) return;
+  if (inCart) {
+    indicator.classList.remove('opacity-0');
+  } else {
+    indicator.classList.add('opacity-0');
+    const row = document.getElementById('prow-' + idx);
+    if (row) row.classList.remove('in-cart-row');
+  }
+  updateRowAddBtn(idx);
+}
+
+function stepQty(idx, delta) {
+  const el = document.getElementById('qi-' + idx);
+  if (!el) return;
+  const currentVal = parseInt(el.value) || 0;
+  const val = Math.max(0, Math.min(9999, currentVal + delta));
+  
+  if (val === 0) {
+    removeAllLinesFromCart(idx);
+    return;
+  }
+  
+  el.value = val;
+  if (cart.some(c => c.idx === idx)) {
+    handleListQtyChange(idx, val);
+  }
+}
+
+function handleListQtyChange(idx, inputVal) {
+  const targetQty = parseInt(inputVal);
+  
+  if (targetQty === 0) {
+    removeAllLinesFromCart(idx);
+    return;
+  }
+  
+  if (isNaN(targetQty) || targetQty < 1) return;
+
+  const matchedLines = cart.filter(c => c.idx === idx);
+  if (!matchedLines.length) return; 
+
+  if (matchedLines.length === 1) {
+    matchedLines[0].qty = targetQty;
+  } else {
+    const currentTotal = matchedLines.reduce((sum, c) => sum + c.qty, 0);
+    const diff = targetQty - currentTotal;
+    matchedLines[0].qty = Math.max(1, matchedLines[0].qty + diff);
+  }
+
+  renderCart();
+}
+
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+function addToCart(idx) {
+  const mode = getVatMode(idx);
+  const p = products[idx];
+
+  let price, isCustom = false;
+  if (mode === 'custom') {
+    const cpEl = document.getElementById('cp-' + idx);
+    const customVal = parseFloat(cpEl ? cpEl.value : '');
+    if (isNaN(customVal) || customVal < 0) {
+      cpEl && cpEl.focus();
+      cpEl && cpEl.classList.add('ring-1', 'ring-destructive', 'border-destructive');
+      setTimeout(() => cpEl && cpEl.classList.remove('ring-1', 'ring-destructive', 'border-destructive'), 1500);
+      return;
+    }
+    price = customVal;
+    isCustom = true;
+  } else {
+    price = mode === 'inc' ? p.vat : p.cost;
+  }
+
+  const existing = !isCustom && cart.find(c => c.idx === idx && c.mode === mode && !c.isCustom);
+  if (existing) { 
+    existing.qty += 1; 
+  } else { 
+    const singleProductLine = cart.find(c => c.idx === idx);
+    if (singleProductLine && !isCustom && singleProductLine.mode !== 'custom') {
+      singleProductLine.mode = mode;
+      singleProductLine.price = price;
+      singleProductLine.qty += 1;
+    } else {
+      cart.push({ idx, name: p.name, price, mode: isCustom ? 'custom' : mode, isCustom, qty: 1 }); 
+    }
+  }
+  
+  toggleListStepperVisibility(idx, true);
+  highlightRow(idx);
+  updateRowAddBtn(idx);
+  renderCart();
+  syncProductRowQtyInput(idx);
+}
+
+function removeFromCart(i) {
+  const removedIdx = cart[i].idx;
+  cart.splice(i, 1);
+  renderCart();
+  updateRowCartIndicator(removedIdx);
+  updateRowAddBtn(removedIdx);
+  syncProductRowQtyInput(removedIdx);
+  
+  if (!cart.some(c => c.idx === removedIdx)) {
+    toggleListStepperVisibility(removedIdx, false);
+  }
+}
+
+function updateCartQty(i, val) {
+  const qty = parseInt(val);
+  if (isNaN(qty) || qty < 0) return;
+  const productIdx = cart[i].idx;
+  if (qty === 0) {
+    cart.splice(i, 1);
+    renderCart();
+    updateRowCartIndicator(productIdx);
+    updateRowAddBtn(productIdx);
+    syncProductRowQtyInput(productIdx);
+    if (!cart.some(c => c.idx === productIdx)) {
+      toggleListStepperVisibility(productIdx, false);
+    }
+    return;
+  }
+  cart[i].qty = qty;
+  recalcTotals();
+  syncProductRowQtyInput(productIdx);
+}
+
+function clearCart() {
+  if (cart.length && confirm('Clear all items from the order?')) {
+    const idxs = [...new Set(cart.map(c => c.idx))];
+    cart = [];
+    renderCart();
+    idxs.forEach(i => { 
+      updateRowCartIndicator(i); 
+      updateRowAddBtn(i); 
+      toggleListStepperVisibility(i, false);
+      const el = document.getElementById('qi-' + i);
+      if (el) el.value = 1;
+    });
+  }
+}
+
+function recalcTotals() {
+  let exTotal = 0, incTotal = 0;
+  cart.forEach((item, i) => {
+    const qEl = document.getElementById('cq-' + i);
+    const qty = qEl ? (parseInt(qEl.value) || 0) : item.qty;
+    const lineTotal = item.price * qty;
+    const ltEl = document.getElementById('lt-' + i);
+    if (ltEl) ltEl.textContent = fmt(lineTotal);
+    if (item.mode === 'inc') incTotal += lineTotal; else exTotal += lineTotal;
+  });
+  document.getElementById('total-ex').textContent = fmt(exTotal);
+  document.getElementById('total-inc').textContent = fmt(incTotal);
+  document.getElementById('grand-total').textContent = fmt(exTotal + incTotal);
+  const totalQty = cart.reduce((s, c) => {
+    const qEl = document.getElementById('cq-' + cart.indexOf(c));
+    return s + (qEl ? (parseInt(qEl.value) || 0) : c.qty);
+  }, 0);
+  const itemWord = cart.length === 1 ? 'item' : 'items';
+  document.getElementById('item-count').textContent =
+    `${cart.length} line ${itemWord} • ${totalQty} units total`;
+}
+
+function renderCart() {
+  const body = document.getElementById('cart-body');
+  const totalsArea = document.getElementById('totals-area');
+
+  if (!cart.length) {
+    body.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-muted-foreground">No items added yet. Search and add products from the system catalog above.</td></tr>';
+    totalsArea.style.display = 'none';
+    return;
+  }
+
+  let exTotal = 0, incTotal = 0;
+  body.innerHTML = cart.map((item, i) => {
+    const lineTotal = item.price * item.qty;
+    if (item.mode === 'inc') incTotal += lineTotal; else exTotal += lineTotal;
+    
+    const pillMarkup = item.isCustom
+      ? `<span class="ml-2 inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 uppercase">Custom</span>`
+      : item.mode === 'inc' 
+      ? `<span class="ml-2 inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase">Inc. VAT</span>`
+      : `<span class="ml-2 inline-flex items-center rounded-full bg-secondary border border-border px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase">Ex. VAT</span>`;
+      
+    return `<tr class="hover:bg-muted/30 transition-colors">
+      <td class="p-4 align-middle font-medium text-foreground max-w-[240px] truncate" title="${esc(item.name)}">
+        <div class="flex items-center flex-wrap gap-1">${esc(item.name)} ${pillMarkup}</div>
+      </td>
+      <td class="p-4 align-middle text-center">
+        <input type="number" class="h-8 w-16 rounded-md border border-input bg-background px-2 text-center text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" id="cq-${i}" value="${item.qty}" min="0" max="9999" oninput="updateCartQty(${i}, this.value)">
+      </td>
+      <td class="p-4 align-middle text-right tabular-nums text-muted-foreground font-medium">${fmt(item.price)}</td>
+      <td class="p-4 align-middle text-right tabular-nums text-foreground font-bold" id="lt-${i}">${fmt(lineTotal)}</td>
+      <td class="p-4 align-middle text-center">
+        <button onclick="removeFromCart(${i})" class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Remove row">×</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('total-ex').textContent = fmt(exTotal);
+  document.getElementById('total-inc').textContent = fmt(incTotal);
+  document.getElementById('grand-total').textContent = fmt(exTotal + incTotal);
+
+  const totalQty = cart.reduce((s, c) => s + c.qty, 0);
+  const itemWord = cart.length === 1 ? 'item' : 'items';
+  document.getElementById('item-count').textContent =
+    `${cart.length} line ${itemWord} • ${totalQty} units total`;
+
+  totalsArea.style.display = 'block';
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmt(n) { return '£' + n.toFixed(2); }
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
