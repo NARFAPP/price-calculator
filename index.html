@@ -666,7 +666,7 @@ function applyFilters() {
           <div class="inline-flex rounded-lg border border-input bg-background p-0.5 shrink-0" id="vt-${idx}">
             <button onclick="setVatMode(${idx},'ex')" ${exBtnMarkup}>Ex</button>
             <button onclick="setVatMode(${idx},'inc')" ${incBtnMarkup}>Inc</button>
-            <button onclick="setVatMode(${idx},'custom')" ${customBtnMarkup}>£ Custom</button>
+            <button onclick="setVatMode(${idx},'custom')" ${customBtnMarkup}>Custom</button>
           </div>
           <input type="number" id="cp-${idx}" placeholder="0.00" min="0" step="0.01" value="${savedCustomValue}"
             onblur="if(!this.value.trim())setVatMode(${idx},'ex')"
